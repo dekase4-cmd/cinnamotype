@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CinnamoType: Belajar Mengetik Bersama Sahabat Awan</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            background: linear-gradient(135deg, #c7ecee 0%, #dff9fb 45%, #fce4ec 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Quicksand', 'Nunito', 'Segoe UI', monospace, sans-serif;
+            color: #576574;
+        }
+        #game-wrapper {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            box-shadow: 0 25px 60px rgba(100, 150, 180, 0.35), 0 0 0 4px #ffffff;
+            border-radius: 24px;
+            overflow: hidden;
+            background: #eef9fe;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+        }
+
+        /* Glassmorphism Pastel HUD */
+        .hud-top {
+            position: absolute;
+            top: 16px;
+            left: 18px;
+            right: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .stat-badge {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 2px solid #ffffff;
+            padding: 8px 18px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 13px;
+            font-weight: 800;
+            box-shadow: 0 6px 16px rgba(160, 200, 220, 0.25);
+            color: #576574;
+        }
+        .hp-track {
+            width: 130px;
+            height: 12px;
+            background: #ffeaa7;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #fff;
+        }
+        .hp-bar {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #ff9ff3, #ff6b81);
+            border-radius: 10px;
+            transition: width 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Active Typed Word Box */
+        .input-bar-container {
+            position: absolute;
+            bottom: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .input-display {
+            background: rgba(255, 255, 255, 0.95);
+            border: 2.5px solid #48dbfb;
+            box-shadow: 0 8px 24px rgba(72, 219, 251, 0.35);
+            border-radius: 24px;
+            padding: 9px 28px;
+            font-size: 19px;
+            font-weight: 900;
+            letter-spacing: 2.5px;
+            color: #00cec9;
+            min-width: 240px;
+            text-align: center;
+            transition: border-color 0.2s;
+        }
+        .input-display span.typed {
+            color: #ff9ff3;
+            text-shadow: 0 0 10px rgba(255, 159, 243, 0.8);
+        }
+        .input-display span.pending {
+            color: #8395a7;
+        }
+
+        /* Screen Overlays */
+        .overlay-screen {
+            position: absolute;
+            inset: 0;
+            background: rgba(238, 249, 254, 0.92);
+            backdrop-filter: blur(12px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            padding: 30px;
+            text-align: center;
+        }
+        .overlay-screen h1 {
+            font-size: 32px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            color: #48dbfb;
+            text-shadow: 0 3px 0 #fff, 0 6px 16px rgba(72, 219, 251, 0.4);
+        }
+        .overlay-screen p {
+            color: #8395a7;
+            font-size: 14px;
+            max-width: 480px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+            font-weight: 600;
+        }
+        .btn-action {
+            background: linear-gradient(135deg, #48dbfb, #ff9ff3);
+            color: #fff;
+            font-weight: 900;
+            font-size: 16px;
+            padding: 13px 36px;
+            border-radius: 25px;
+            border: 3px solid #fff;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(255, 159, 243, 0.45);
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .btn-action:hover {
+            transform: scale(1.06);
+            box-shadow: 0 12px 30px rgba(72, 219, 251, 0.6);
+        }
+        .stats-summary {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #ffffff;
+            padding: 16px 32px;
+            border-radius: 20px;
+            margin-bottom: 22px;
+            display: flex;
+            gap: 26px;
+            box-shadow: 0 8px 20px rgba(180, 210, 230, 0.3);
+        }
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .stat-val {
+            font-size: 22px;
+            font-weight: 900;
+            color: #ff9ff3;
+        }
+        .stat-lbl {
+            font-size: 11px;
+            color: #8395a7;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-wrapper">
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+    <!-- Top Status HUD -->
+    <div class="hud-top">
+        <div class="stat-badge">
+            <span style="color:#ff6b81; font-size:16px;">☁️ AWAN IMPIAN</span>
+            <div class="hp-track">
+                <div class="hp-bar" id="hpBar"></div>
+            </div>
+            <span id="hpText" style="color:#ff6b81;">100 HP</span>
+        </div>
+
+        <div class="stat-badge">
+            <div>SKOR: <span id="scoreText" style="color:#48dbfb;">0</span></div>
+            <div style="border-left:2px solid #f1f2f6; padding-left:10px;">
+                CPM: <span id="cpmText" style="color:#10ac84;">0</span>
+            </div>
+            <div style="border-left:2px solid #f1f2f6; padding-left:10px;">
+                WPM: <span id="wpmText" style="color:#ff9ff3;">0</span>
+            </div>
+            <div style="border-left:2px solid #f1f2f6; padding-left:10px;">
+                KOMBO: <span id="streakText" style="color:#feca57;">x1</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Typed Display -->
+    <div class="input-bar-container">
+        <div class="input-display" id="typingDisplay">
+            <span style="color:#b2bec3; font-size:14px;">[ KETIK KATA AWAN LUCU ]</span>
+        </div>
+        <div style="font-size:12px; color:#8395a7; font-weight:700;">✨ Ketik huruf pertama untuk membidik teman berawan! ✨</div>
+    </div>
+
+    <!-- Start Overlay -->
+    <div class="overlay-screen" id="startScreen">
+        <h1>CINNAMOTYPE: ADVENTURE</h1>
+        <p>Bantu Cinnamoroll dan sahabat-sahabat manisnya menangkap kata-kata pelangi di langit! Ketik huruf demi huruf dengan tepat untuk membuat Cinnamoroll melompat bahagia dan melepaskan bintang pelangi.</p>
+        <button class="btn-action" onclick="startGame()">Mulai Mengetik Ceria 🌟</button>
+    </div>
+
+    <!-- Game Over Overlay -->
+    <div class="overlay-screen" id="endScreen" style="display:none;">
+        <h1 id="endTitle" style="color:#ff6b81;">AWAN TERJATUH!</h1>
+        <p id="endDesc">Cinnamoroll butuh istirahat sejenak dari petualangan langit.</p>
+        
+        <div class="stats-summary">
+            <div class="stat-item">
+                <span class="stat-val" id="finalScore">0</span>
+                <span class="stat-lbl">Skor Ceria</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val" id="finalCpm" style="color:#10ac84;">0</span>
+                <span class="stat-lbl">Rata-rata CPM</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val" id="finalWpm">0</span>
+                <span class="stat-lbl">Rata-rata WPM</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val" id="finalAcc" style="color:#54a0ff;">100%</span>
+                <span class="stat-lbl">Akurasi Ketikan</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val" id="finalWords" style="color:#feca57;">0</span>
+                <span class="stat-lbl">Kata Ditangkap</span>
+            </div>
+        </div>
+
+        <button class="btn-action" onclick="startGame()">Main Lagi Bersama Teman [R] ✨</button>
+    </div>
+</div>
+
+<script>
+/**
+ * ============================================================================
+ * 1. KAMUS KATA & SISTEM LEVEL (Pastel Edutainment)
+ * ============================================================================
+ */
+const WORD_BANK = {
+    easy: [
+        "awan", "kue", "susu", "roti", "teh", "madu", "pelangi", "bintang", "senyum",
+        "cinta", "teman", "langit", "manis", "bunga", "pita", "kado", "hati", "sayang"
+    ],
+    medium: [
+        "sahabat", "kelinci", "mentega", "secangkir", "karamel", "berkilau",
+        "gembira", "terbang", "kelembutan", "pelukan", "matahari", "bernyanyi"
+    ],
+    hard: [
+        "kebahagiaan", "petualangan", "persahabatan", "keajaiban", "kehangatan",
+        "marshmallow", "strawberry", "cappuccino"
+    ]
+};
+
+/**
+ * ============================================================================
+ * 2. AUDIO SYNTHESIZER (Web Audio API Native)
+ * ============================================================================
+ */
+const Sound = {
+    ctx: null,
+    init() {
+        if (!this.ctx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.ctx = new AudioContext();
+        }
+    },
+    playTone(freq, type, dur, gainVal = 0.1) {
+        if (!this.ctx) return;
+        try {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            gain.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + dur);
+        } catch (e) {}
+    },
+    keyHit() { this.playTone(659.25, 'sine', 0.08, 0.08); }, // nada manis E5
+    wordSuccess() { 
+        // Melodi ceria C-E-G-C (Major chord arpeggio)
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+            setTimeout(() => this.playTone(freq, 'sine', 0.18, 0.09), idx * 60);
+        });
+    },
+    wrongKey() { this.playTone(220, 'triangle', 0.14, 0.09); },
+    cloudHit() { this.playTone(130, 'sine', 0.3, 0.15); }
+};
+
+/**
+ * ============================================================================
+ * 3. CINNAMOROLL & FRIENDS COMPANION ENGINE (Full Procedural Canvas 2D)
+ * ============================================================================
+ */
+const CinnamoSquad = {
+    // Karakter Utama: Cinnamoroll (di tengah)
+    main: {
+        x: 400,
+        y: 495,
+        baseY: 495,
+        bounceOffset: 0,
+        earFlap: 0,
+        scaleX: 1,
+        scaleY: 1
+    },
+    // Sahabat 1: Chiffon / Mocha (Poodle Lucu di Kiri)
+    friendLeft: {
+        x: 230,
+        y: 520,
+        baseY: 520,
+        color: '#ffc048', // Mocha/Chiffon tone
+        earColor: '#ffa801',
+        bounceOffset: 0,
+        wagTail: 0
+    },
+    // Sahabat 2: Milk / Poron (Kelinci/Anak Anjing Pastel di Kanan)
+    friendRight: {
+        x: 570,
+        y: 520,
+        baseY: 520,
+        color: '#ffcccc', // Baby pink
+        earColor: '#ff9ff3',
+        bounceOffset: 0,
+        wagTail: 0
+    },
+    rainbowBeams: [],
+    sparkles: [],
+
+    triggerHappyBounce() {
+        // Cinnamoroll lompat tinggi dengan squash & stretch
+        this.main.bounceOffset = -26;
+        this.main.scaleX = 1.25;
+        this.main.scaleY = 0.78;
+
+        // Sahabat kiri & kanan ikut melompat ceria
+        this.friendLeft.bounceOffset = -16;
+        this.friendRight.bounceOffset = -18;
+
+        // Munculkan partikel bintang & hati pelangi
+        for (let i = 0; i < 7; i++) {
+            const colors = ['#ffeaa7', '#ff9ff3', '#48dbfb', '#55efc4', '#fd79a8'];
+            this.sparkles.push({
+                x: this.main.x + (Math.random() - 0.5) * 60,
+                y: this.main.y - 20,
+                vx: (Math.random() - 0.5) * 90,
+                vy: -Math.random() * 70 - 40,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                size: Math.random() * 4 + 3.5,
+                shape: Math.random() > 0.4 ? 'star' : 'heart',
+                life: 0.7
+            });
+        }
+    },
+
+    update(dt) {
+        const time = performance.now() / 1000;
+        
+        // 1. Idle Float & Ear Flapping Cinnamoroll
+        const idleFloat = Math.sin(time * 3) * 6;
+        this.main.bounceOffset += (0 - this.main.bounceOffset) * 9 * dt;
+        this.main.scaleX += (1 - this.main.scaleX) * 8 * dt;
+        this.main.scaleY += (1 - this.main.scaleY) * 8 * dt;
+        this.main.earFlap = Math.sin(time * 4.5) * 0.16;
+        this.main.y = this.main.baseY + idleFloat + this.main.bounceOffset;
+
+        // 2. Sahabat Kiri & Kanan
+        this.friendLeft.bounceOffset += (0 - this.friendLeft.bounceOffset) * 8 * dt;
+        this.friendLeft.y = this.friendLeft.baseY + Math.sin(time * 3 + 1) * 4 + this.friendLeft.bounceOffset;
+        this.friendLeft.wagTail = Math.sin(time * 8) * 0.3;
+
+        this.friendRight.bounceOffset += (0 - this.friendRight.bounceOffset) * 8 * dt;
+        this.friendRight.y = this.friendRight.baseY + Math.sin(time * 3 + 2) * 4 + this.friendRight.bounceOffset;
+        this.friendRight.wagTail = Math.sin(time * 8 + 1) * 0.3;
+
+        // 3. Update Partikel Bintang & Sparkles
+        for (let i = this.sparkles.length - 1; i >= 0; i--) {
+            const sp = this.sparkles[i];
+            sp.x += sp.vx * dt;
+            sp.y += sp.vy * dt;
+            sp.life -= dt;
+            if (sp.life <= 0) this.sparkles.splice(i, 1);
+        }
+
+        // 4. Update Pelangi Tembakan Laser
+        for (let i = this.rainbowBeams.length - 1; i >= 0; i--) {
+            const rb = this.rainbowBeams[i];
+            rb.life -= dt;
+            if (rb.life <= 0) this.rainbowBeams.splice(i, 1);
+        }
+    },
+
+    render(ctx) {
+        // --- 1. Sahabat Kiri (Mocha/Chiffon) ---
+        this.drawFriend(ctx, this.friendLeft.x, this.friendLeft.y, this.friendLeft.color, this.friendLeft.earColor, this.friendLeft.wagTail, -1);
+
+        // --- 2. Sahabat Kanan (Milk/Poron) ---
+        this.drawFriend(ctx, this.friendRight.x, this.friendRight.y, this.friendRight.color, this.friendRight.earColor, this.friendRight.wagTail, 1);
+
+        // --- 3. Karakter Utama: Cinnamoroll ---
+        ctx.save();
+        ctx.translate(this.main.x, this.main.y);
+        ctx.scale(this.main.scaleX, this.main.scaleY);
+
+        // Awan Pijakan Halus (Cloud Cushion)
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = 'rgba(160, 210, 235, 0.45)';
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(-22, 22, 16, 0, Math.PI * 2);
+        ctx.arc(22, 22, 16, 0, Math.PI * 2);
+        ctx.arc(0, 18, 22, 0, Math.PI * 2);
+        ctx.arc(-38, 26, 12, 0, Math.PI * 2);
+        ctx.arc(38, 26, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0; // reset
+
+        // Ekor Cinnamon Roll Melingkar di Belakang Kanan
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#dff9fb';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(24, 6, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Telinga Kiri Panjang Khas Cinnamoroll
+        ctx.save();
+        ctx.translate(-16, -4);
+        ctx.rotate(-0.25 + this.main.earFlap);
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#dff9fb';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.ellipse(-24, 0, 26, 9.5, -0.15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        // Telinga Kanan Panjang
+        ctx.save();
+        ctx.translate(16, -4);
+        ctx.rotate(0.25 - this.main.earFlap);
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#dff9fb';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.ellipse(24, 0, 26, 9.5, 0.15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        // Badan & Kepala Lembut Bulat
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#dff9fb';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 28, 20, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Mata Biru Langit Ceria (Sky Blue Iconic Eyes)
+        ctx.fillStyle = '#48dbfb';
+        ctx.beginPath();
+        ctx.arc(-10, -2, 3.8, 0, Math.PI * 2);
+        ctx.arc(10, -2, 3.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Bintik Kilau Putih Mata (Catchlight)
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(-11.5, -3.5, 1.4, 0, Math.PI * 2);
+        ctx.arc(8.5, -3.5, 1.4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Pipi Merona Pastel Lembut (Blush)
+        ctx.fillStyle = 'rgba(255, 159, 243, 0.65)';
+        ctx.beginPath();
+        ctx.ellipse(-16, 5, 5.5, 3.2, 0, 0, Math.PI * 2);
+        ctx.ellipse(16, 5, 5.5, 3.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Mulut Senyum Kucing Menggemaskan (ω shape)
+        ctx.strokeStyle = '#8395a7';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.arc(-2.5, 4, 3, 0.1, Math.PI - 0.2);
+        ctx.arc(2.5, 4, 3, 0.2, Math.PI - 0.1);
+        ctx.stroke();
+
+        ctx.restore();
+
+        // --- 4. Render Efek Sinar Pelangi (Rainbow Beam) ---
+        for (let i = 0; i < this.rainbowBeams.length; i++) {
+            const rb = this.rainbowBeams[i];
+            const colors = ['#ff7675', '#feca57', '#55efc4', '#48dbfb', '#ff9ff3'];
+            const progress = rb.life / 0.28;
+            for (let c = 0; c < colors.length; c++) {
+                ctx.strokeStyle = colors[c];
+                ctx.lineWidth = 3 * progress;
+                ctx.beginPath();
+                ctx.moveTo(rb.x1 + (c - 2) * 3, rb.y1);
+                ctx.lineTo(rb.x2 + (c - 2) * 3, rb.y2);
+                ctx.stroke();
+            }
+        }
+
+        // --- 5. Render Sparkle Bintang & Hati ---
+        for (let i = 0; i < this.sparkles.length; i++) {
+            const sp = this.sparkles[i];
+            ctx.fillStyle = sp.color;
+            ctx.beginPath();
+            ctx.arc(sp.x, sp.y, sp.size * (sp.life / 0.7), 0, Math.PI * 2);
+            ctx.fill();
+        }
+    },
+
+    drawFriend(ctx, x, y, bodyCol, earCol, tailWag, dir) {
+        ctx.save();
+        ctx.translate(x, y);
+
+        // Awan kecil sahabat
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(-12, 14, 10, 0, Math.PI * 2);
+        ctx.arc(12, 14, 10, 0, Math.PI * 2);
+        ctx.arc(0, 10, 14, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Telinga Kriting Lucu Poodle / Bunny
+        ctx.fillStyle = earCol;
+        ctx.beginPath();
+        ctx.arc(-16, -4, 9, 0, Math.PI * 2);
+        ctx.arc(16, -4, 9, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Kepala
+        ctx.fillStyle = bodyCol;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 18, 14, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Mata
+        ctx.fillStyle = '#2f3542';
+        ctx.beginPath();
+        ctx.arc(-6, -1, 2.2, 0, Math.PI * 2);
+        ctx.arc(6, -1, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Blush
+        ctx.fillStyle = 'rgba(255, 107, 129, 0.45)';
+        ctx.beginPath();
+        ctx.arc(-10, 3, 3, 0, Math.PI * 2);
+        ctx.arc(10, 3, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Hidung & Mulut
+        ctx.fillStyle = '#576574';
+        ctx.beginPath();
+        ctx.arc(0, 2, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+    }
+};
+
+/**
+ * ============================================================================
+ * 4. GAME STATE & TYPING CONTROLLER
+ * ============================================================================
+ */
+const state = {
+    isRunning: false,
+    hp: 100,
+    maxHp: 100,
+    score: 0,
+    streak: 0,
+    wordsDestroyed: 0,
+    totalKeystrokes: 0,
+    correctKeystrokes: 0,
+    startTime: 0,
+
+    enemies: [],
+    floatingTexts: [],
+    spawnTimer: 0,
+    spawnInterval: 2.4,
+    targetEnemy: null
+};
+
+function getNextWord() {
+    let pool = WORD_BANK.easy;
+    if (state.wordsDestroyed > 10) pool = pool.concat(WORD_BANK.medium);
+    if (state.wordsDestroyed > 24) pool = pool.concat(WORD_BANK.hard);
+    return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function spawnWordCloud() {
+    const word = getNextWord();
+    const spawnX = Math.random() * (700 - 100) + 100;
+    const speed = 22 + Math.min(32, state.wordsDestroyed * 0.75);
+
+    // Variasi warna awan pastel musuh
+    const cloudPalettes = ['#dff9fb', '#fce4ec', '#f3e5f5', '#fff9c4', '#e8f5e9'];
+    const col = cloudPalettes[Math.floor(Math.random() * cloudPalettes.length)];
+
+    state.enemies.push({
+        word: word,
+        typedIndex: 0,
+        x: spawnX,
+        y: -25,
+        speed: speed,
+        radius: 22,
+        color: col,
+        floatTime: Math.random() * 10,
+        active: true
+    });
+}
+
+/**
+ * ============================================================================
+ * 5. INPUT HANDLING WITH INTERACTIVE BOUNCE
+ * ============================================================================
+ */
+window.addEventListener('keydown', (e) => {
+    if (!state.isRunning) {
+        if (e.code === 'KeyR' && document.getElementById('endScreen').style.display === 'flex') {
+            startGame();
+        }
+        return;
+    }
+
+    if (e.code === 'Space') e.preventDefault();
+
+    const char = e.key.toLowerCase();
+    if (!/^[a-z]$/.test(char)) return;
+
+    Sound.init();
+    state.totalKeystrokes++;
+
+    if (!state.targetEnemy) {
+        let candidates = state.enemies.filter(en => en.active && en.word[0] === char);
+        if (candidates.length > 0) {
+            candidates.sort((a, b) => b.y - a.y);
+            state.targetEnemy = candidates[0];
+            processHit(state.targetEnemy);
+        } else {
+            processMiss();
+        }
+    } else {
+        const expectedChar = state.targetEnemy.word[state.targetEnemy.typedIndex];
+        if (char === expectedChar) {
+            processHit(state.targetEnemy);
+        } else {
+            processMiss();
+        }
+    }
+});
+
+function processHit(enemy) {
+    enemy.typedIndex++;
+    state.correctKeystrokes++;
+    Sound.keyHit();
+
+    // Trigger animasi interaktif Cinnamoroll melompat ceria!
+    CinnamoSquad.triggerHappyBounce();
+
+    // Selesai satu kata
+    if (enemy.typedIndex >= enemy.word.length) {
+        // Tembakkan Sinar Pelangi Cinnamoroll
+        CinnamoSquad.rainbowBeams.push({
+            x1: CinnamoSquad.main.x,
+            y1: CinnamoSquad.main.y - 15,
+            x2: enemy.x,
+            y2: enemy.y,
+            life: 0.28
+        });
+
+        enemy.active = false;
+        state.wordsDestroyed++;
+        state.streak++;
+        const pts = enemy.word.length * 20 * Math.min(4, state.streak);
+        state.score += pts;
+
+        Sound.wordSuccess();
+        spawnFloatingText(enemy.x, enemy.y, `+${pts} ✨`, '#ff9ff3');
+
+        // Bintang meletup di langit
+        for (let i = 0; i < 12; i++) {
+            CinnamoSquad.sparkles.push({
+                x: enemy.x,
+                y: enemy.y,
+                vx: (Math.random() - 0.5) * 140,
+                vy: (Math.random() - 0.5) * 140,
+                color: Math.random() > 0.5 ? '#ffeaa7' : '#ff9ff3',
+                size: Math.random() * 5 + 3,
+                life: 0.6
+            });
+        }
+
+        state.targetEnemy = null;
+    }
+
+    updateInputDisplay();
+}
+
+function processMiss() {
+    state.streak = 0;
+    Sound.wrongKey();
+    spawnFloatingText(CinnamoSquad.main.x, CinnamoSquad.main.y - 45, "Oops! ☁️", "#ff6b81");
+
+    const el = document.getElementById('typingDisplay');
+    el.style.borderColor = '#ff6b81';
+    setTimeout(() => el.style.borderColor = '#48dbfb', 180);
+}
+
+function updateInputDisplay() {
+    const el = document.getElementById('typingDisplay');
+    if (!state.targetEnemy) {
+        el.innerHTML = '<span style="color:#b2bec3; font-size:14px;">[ KETIK KATA AWAN LUCU ]</span>';
+    } else {
+        const word = state.targetEnemy.word;
+        const typed = word.substring(0, state.targetEnemy.typedIndex);
+        const pending = word.substring(state.targetEnemy.typedIndex);
+        el.innerHTML = `<span class="typed">${typed.toUpperCase()}</span><span class="pending">${pending.toUpperCase()}</span>`;
+    }
+}
+
+function spawnFloatingText(x, y, text, color) {
+    state.floatingTexts.push({ x, y, text, color, life: 0.8 });
+}
+
+/**
+ * ============================================================================
+ * 6. CORE UPDATE CYCLE (Physics, Collisions, CPM & WPM)
+ * ============================================================================
+ */
+function update(dt) {
+    if (!state.isRunning) return;
+
+    // Update Sahabat Cinnamoroll
+    CinnamoSquad.update(dt);
+
+    // Spawner Awan Kata
+    state.spawnTimer -= dt;
+    if (state.spawnTimer <= 0) {
+        spawnWordCloud();
+        state.spawnTimer = Math.max(1.2, state.spawnInterval - (state.wordsDestroyed * 0.03));
+    }
+
+    // Gerak Awan Turun
+    for (let i = 0; i < state.enemies.length; i++) {
+        const e = state.enemies[i];
+        if (!e.active) continue;
+
+        e.y += e.speed * dt;
+        e.floatTime += dt;
+        e.x += Math.sin(e.floatTime * 2) * 0.35; // Goyang melayang lembut
+
+        // Nabrak batas awan bawah
+        if (e.y >= 460) {
+            e.active = false;
+            state.hp -= 20;
+            state.streak = 0;
+            Sound.cloudHit();
+            spawnFloatingText(e.x, 460, "-20 HP ☁️", "#ff6b81");
+
+            if (state.targetEnemy === e) {
+                state.targetEnemy = null;
+                updateInputDisplay();
+            }
+
+            if (state.hp <= 0) {
+                state.hp = 0;
+                gameOver();
+            }
+        }
+    }
+
+    state.enemies = state.enemies.filter(e => e.active);
+
+    // Floating Text
+    for (let i = state.floatingTexts.length - 1; i >= 0; i--) {
+        const t = state.floatingTexts[i];
+        t.y -= 25 * dt;
+        t.life -= dt;
+        if (t.life <= 0) state.floatingTexts.splice(i, 1);
+    }
+
+    updateHUD();
+}
+
+function updateHUD() {
+    document.getElementById('hpBar').style.width = `${Math.max(0, state.hp)}%`;
+    document.getElementById('hpText').innerText = `${state.hp} HP`;
+    document.getElementById('scoreText').innerText = state.score;
+    document.getElementById('streakText').innerText = `x${Math.min(4, Math.max(1, state.streak))}`;
+
+    const elapsedMinutes = (performance.now() - state.startTime) / 60000;
+    const cpm = elapsedMinutes > 0 ? Math.round(state.correctKeystrokes / elapsedMinutes) : 0;
+    const wpm = Math.round(cpm / 5);
+    document.getElementById('cpmText').innerText = cpm;
+    document.getElementById('wpmText').innerText = wpm;
+}
+
+/**
+ * ============================================================================
+ * 7. RENDER ENGINE (Langit Pastel, Awan Fluffy & Pelangi)
+ * ============================================================================
+ */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+function render() {
+    ctx.clearRect(0, 0, 800, 600);
+
+    // 1. Gambar Pelangi Melengkung di Langit Latar
+    ctx.save();
+    const rainbowColors = ['rgba(255,159,243,0.3)', 'rgba(254,202,87,0.3)', 'rgba(85,239,196,0.3)', 'rgba(72,219,251,0.3)'];
+    for (let i = 0; i < rainbowColors.length; i++) {
+        ctx.strokeStyle = rainbowColors[i];
+        ctx.lineWidth = 14;
+        ctx.beginPath();
+        ctx.arc(400, 580, 340 + i * 14, Math.PI, 0);
+        ctx.stroke();
+    }
+    ctx.restore();
+
+    // 2. Garis Awan Pembatas Bawah (Safety Line)
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 159, 243, 0.45)';
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([8, 8]);
+    ctx.beginPath();
+    ctx.moveTo(0, 470);
+    ctx.lineTo(800, 470);
+    ctx.stroke();
+    ctx.restore();
+
+    // 3. Render Awan-Awan Kata yang Melayang Turun
+    for (let i = 0; i < state.enemies.length; i++) {
+        const e = state.enemies[i];
+        const isTarget = (state.targetEnemy === e);
+
+        ctx.save();
+        ctx.translate(e.x, e.y);
+
+        // Awan Fluffy Pastel
+        ctx.fillStyle = isTarget ? '#ffffff' : e.color;
+        ctx.shadowColor = isTarget ? 'rgba(72, 219, 251, 0.6)' : 'rgba(160, 200, 220, 0.2)';
+        ctx.shadowBlur = isTarget ? 18 : 8;
+
+        ctx.beginPath();
+        ctx.arc(-16, 0, 16, 0, Math.PI * 2);
+        ctx.arc(16, 0, 16, 0, Math.PI * 2);
+        ctx.arc(0, -8, 20, 0, Math.PI * 2);
+        ctx.arc(0, 6, 18, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0; // reset
+
+        // Border Awan Target
+        if (isTarget) {
+            ctx.strokeStyle = '#48dbfb';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+        }
+
+        // Teks Kata di Tengah Awan
+        ctx.font = 'bold 16px Quicksand, Consolas, monospace';
+        const word = e.word;
+        const typed = word.substring(0, e.typedIndex);
+        const nextChar = word.charAt(e.typedIndex);
+        const remaining = word.substring(e.typedIndex + 1);
+
+        const fullWordWidth = ctx.measureText(word.toUpperCase()).width;
+        let startDrawX = -fullWordWidth / 2;
+        ctx.textAlign = 'left';
+
+        // Sudah diketik (Pink cerah)
+        if (typed.length > 0) {
+            ctx.fillStyle = '#ff9ff3';
+            ctx.fillText(typed.toUpperCase(), startDrawX, 5);
+            startDrawX += ctx.measureText(typed.toUpperCase()).width;
+        }
+
+        // Target berikutnya (Cyan cerah)
+        if (nextChar) {
+            ctx.fillStyle = isTarget ? '#48dbfb' : '#576574';
+            ctx.fillText(nextChar.toUpperCase(), startDrawX, 5);
+            startDrawX += ctx.measureText(nextChar.toUpperCase()).width;
+        }
+
+        // Sisa huruf (Abu-abu lembut)
+        if (remaining.length > 0) {
+            ctx.fillStyle = '#8395a7';
+            ctx.fillText(remaining.toUpperCase(), startDrawX, 5);
+        }
+
+        ctx.restore();
+    }
+
+    // 4. Render Cinnamoroll & Sahabat-sahabatnya
+    CinnamoSquad.render(ctx);
+
+    // 5. Floating Text (+Poin, Miss)
+    for (let i = 0; i < state.floatingTexts.length; i++) {
+        const t = state.floatingTexts[i];
+        ctx.fillStyle = t.color;
+        ctx.font = 'bold 16px Quicksand, monospace';
+        ctx.fillText(t.text, t.x, t.y);
+    }
+}
+
+/**
+ * ============================================================================
+ * 8. GAME CONTROLLER (Start & End)
+ * ============================================================================
+ */
+function startGame() {
+    Sound.init();
+    state.isRunning = true;
+    state.hp = 100;
+    state.score = 0;
+    state.streak = 0;
+    state.wordsDestroyed = 0;
+    state.totalKeystrokes = 0;
+    state.correctKeystrokes = 0;
+    state.startTime = performance.now();
+    state.enemies = [];
+    state.floatingTexts = [];
+    state.targetEnemy = null;
+    state.spawnTimer = 0.5;
+
+    document.getElementById('startScreen').style.display = 'none';
+    document.getElementById('endScreen').style.display = 'none';
+    updateInputDisplay();
+}
+
+function gameOver() {
+    state.isRunning = false;
+    const elapsedMinutes = (performance.now() - state.startTime) / 60000;
+    const finalCpm = elapsedMinutes > 0 ? Math.round(state.correctKeystrokes / elapsedMinutes) : 0;
+    const finalWpm = Math.round(finalCpm / 5);
+    const acc = state.totalKeystrokes > 0 ? Math.round((state.correctKeystrokes / state.totalKeystrokes) * 100) : 100;
+
+    document.getElementById('finalScore').innerText = state.score;
+    document.getElementById('finalCpm').innerText = finalCpm;
+    document.getElementById('finalWpm').innerText = finalWpm;
+    document.getElementById('finalAcc').innerText = `${acc}%`;
+    document.getElementById('finalWords').innerText = state.wordsDestroyed;
+
+    document.getElementById('endScreen').style.display = 'flex';
+}
+
+/**
+ * ============================================================================
+ * 9. ENGINE LOOP
+ * ============================================================================
+ */
+let lastTimestamp = performance.now();
+
+function engineLoop(timestamp) {
+    let dt = (timestamp - lastTimestamp) / 1000;
+    if (dt > 0.05) dt = 0.05;
+    lastTimestamp = timestamp;
+
+    update(dt);
+    render();
+
+    requestAnimationFrame(engineLoop);
+}
+
+requestAnimationFrame(engineLoop);
+</script>
+
+</body>
+</html>
